@@ -13,7 +13,7 @@ namespace SequenceCalculator
         /// En klasse some beregner de n første elementene i en følge
         /// </summary>
         [Serializable()]
-        public class SequenceCalculator
+        public class SequenceCalculator:ISerializable
         {
             public SequenceCalculator(ICalculateNextElement nextFinder)
             {
@@ -23,8 +23,29 @@ namespace SequenceCalculator
                 _populated = false;
             }
 
-            //Egenskaper og Felter
-            public ICalculateNextElement NextFinder { get; }
+
+        //To-Do: Serialisering av instanser som har andre følger enn Fibonacci 
+
+        // Deserialiseringsfunksjonen
+        public SequenceCalculator(SerializationInfo info, StreamingContext ctxt)
+        {
+            //Henter verdier fra info setter dem til til egenskaper og felt
+            SavedInts = (List<BigInteger>)info.GetValue("SavedInts", typeof(List<BigInteger>));
+            _numbersInInitialElements = (int)info.GetValue("numbersInInitialElements", typeof(int));
+            var NextFinder = new FibonacciNext();
+                }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            // Nøkkel:verdi par for serialisering i binært format
+            info.AddValue("NextFinderType", NextFinder.GetType());
+            info.AddValue("SavedInts", SavedInts );
+            info.AddValue("numbersInInitialElements", _numbersInInitialElements);
+        }
+
+
+        //Egenskaper og Felter
+        public ICalculateNextElement NextFinder { get; }
             public List<BigInteger> SavedInts { get; set; }
             private int _numbersInInitialElements;
             private bool _populated;
@@ -45,6 +66,12 @@ namespace SequenceCalculator
                 return ArrayToFill;
             }
 
+                
+            public void Clear()
+        {
+            SavedInts.Clear();
+            _populated = false;
+        }
             public void PopulateList(int numOfElements, BigInteger[] initialElements)
             {
                 _numbersInInitialElements = initialElements.Length;
@@ -66,21 +93,24 @@ namespace SequenceCalculator
             }
             public void Print()
             {
+                if (SavedInts.Count == 0)
+            {
+                Console.WriteLine("No Items to print");
+                return;
+            }
                 for (int i = 0; i < SavedInts.Count; i++)
                 {
                     Console.WriteLine($"Element {i + 1} of the given sequence is :{SavedInts[i]}");
                 }
                 Console.WriteLine($"Current list length: {SavedInts.Count}");
             }
-            //To-Do: Serialization
-            //To-Do: Fortsette fra et bestemt tall 
             //To-Do: Trenger enkapsulering
         }
 
-        /// <summary>
-        /// Implementerer ICalculateNextElement for fibonaccifølgen.
-        /// </summary>
-        public class FibonacciNext : ICalculateNextElement
+    /// <summary>
+    /// Implementerer ICalculateNextElement for fibonaccifølgen.
+    /// </summary>
+    public class FibonacciNext : ICalculateNextElement
         {
 
             public BigInteger CalculateNext(ref BigInteger[] a)
@@ -90,7 +120,7 @@ namespace SequenceCalculator
                 a[1] = returnVal;
                 return returnVal;
             }
-        }
+    }
 
         /// <summary>
         /// Implementerer ICalculateNextElement for aritmetiske følger.
